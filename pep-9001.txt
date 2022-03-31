@@ -1,0 +1,387 @@
+PEP: 9001
+Title: The Final Style Guide for Python Code
+Version: $Revision$
+Last-Modified: $Date$
+Author: Guido van Rossum <guido@python.org>,
+        Barry Warsaw <barry@python.org>,
+        Nick Coghlan <ncoghlan@gmail.com>
+Sponsor: Barry Warsaw <barry@python.org>
+Status: Final
+Type: Standards Track
+Content-Type: text/x-rst
+Created: 01-Apr-2022
+Replaces: 8
+
+
+Introduction
+============
+
+This document gives coding commandments for the code comprising all valid Python programs.
+Please see the companion information PEP describing consequences for non-compliance.
+
+This document is the unadapted word of the BDFL.
+
+This style guide will not evolve over time or be rendered obsolete.
+
+Many projects have their own coding style guidelines.
+Pythonistas with read access are required to report them to their local PyPi office.
+
+
+A Final Consistency is the King of Great Minds
+==============================================
+
+One of the BDFL’s key insights is that code is read much more often than it is written,
+and also something about hobgoblins.
+Having a language that evolves and changes over time contributes to
+the inconsistency of the language, and makes it much harder to read.
+
+A style guide is about consistency.
+Consistency with this style guide is mandatory,
+and a future version of Python may enforce compliance at the interpreter level.
+That's why we say **A Final Consistency is the King of Great Minds**.
+
+Remember: Consistency is *rule*, regardless of your best judgement,
+*even if it breaks backwards compatibility*.
+Non-compliance will have dire consequences,
+and your programs may fail to run in future versions of Python
+if strict adherence to this style guide is not expeditiously adopted.
+
+
+Code Lay-out
+============
+
+Indentation
+-----------
+
+We believe Python should highlight the most important parts of the code.
+That’s why we’re introducing **negative indentation** as the new standard.
+This shines a spotlight on the most important part of a nested block of code (the *body*),
+and lets the *boilerplate* occupy the indented space.
+
+We encourage you to start writing the body of the nested block first,
+and then work your way backwards to function signatures and conditionals.
+Through extensive user testing and surveys, we’ve found that,
+while this may have a more difficult early adoption,
+it’s far more intuitive writing code this way.
+
+This way, you only write the parameters once you know which ones are required by
+your function and only name it once its implementation is finished -
+the same way that writers only pick a title once their work is complete::
+
+  # Correct:
+      def func():
+  return 5
+
+  # Wrong:
+  def bad_func():
+      return 5
+
+::
+
+          def token_bytes(nbytes=None):
+      """Return a random byte string containing *nbytes* bytes.
+      If *nbytes* is ``None`` or not supplied, a reasonable
+      default is used.
+      >>> token_bytes(16)  #doctest:+SKIP
+      b'\\xebr\\x17D*t\\xae\\xd4\\xe3S\\xb6\\xe2\\xebP1\\x8b'
+      """
+      if nbytes is None:
+  nbytes = DEFAULT_ENTROPY
+      return _sysrand.randbytes(nbytes)
+
+::
+
+          d = {}
+          for c in (65, 97):
+      for i in range(26):
+  d[chr(i+c)] = chr((i+13) % 26 + c)
+
+          print("".join([d.get(c, c) for c in s]))
+
+
+Tabs or Spaces?
+---------------
+
+Python developers love spaces, and loathe tabs. Whitespace is life, whitespace is love.
+This is why we’ve changed the lexer to allow spaces *everywhere*.
+You may now have spaces before, after and *within* every piece of syntax the language affords.
+We recommend placing at least one space wherever possible::
+
+      with open ( path , " rb " ) as file_handler :
+  lines = file_handler . readlines ( )
+  print ( f " spam and { lines } " )::
+
+                def _get_chunks ( *iterables , chunksize ) :
+          """Iterates over zip()ed iterables in chunks."""
+          it = zip ( * iterables )
+          while True :
+      chunk = tuple ( itertools . islice ( it , chunksize ) )
+      if not chunk :
+  return
+      yield chunk
+
+
+Maximum Line Length and Line Requirement
+----------------------------------------
+
+The programming community has come a long way since we originally set
+the maximum line length to 79 in PEP 8. There isn’t a *single programmer alive* at this point
+who isn’t using an ultra-wide monitor. To accommodate these extremely wide monitors,
+all lines must now be **at least 120 characters long**, and **no longer than 240 characters**.
+
+If you are having a hard time getting to 120 characters,
+trailing whitespace can be used to pad the length of a line to be compliant.
+You may also put several semi-colon separated statements on a single line to pad your line length.
+Remember to disable the feature in your IDE that removes trailing whitespace,
+as this may in some cases cause your code to raise an **InsufficientLineLength** exception.
+
+Here’s an example of how a PEP 9001 compliant ``textwrap.dedent()`` would look::
+
+          def dedent(text):
+      """Remove any common leading whitespace from every line in `text`.
+      This can be used to make triple-quoted strings line up with the left edge of the display, while still presenting them in the source code in indented form.
+      Note that tabs and spaces are both treated as whitespace, but they are not equal: the lines "  hello" and "\\thello" are considered to have no common leading whitespace.
+      Entirely blank lines are normalized to a newline character.
+      """
+  margin = None; text = _whitespace_only_re.sub('', text); indents = _leading_whitespace_re.findall(text); for indent in indents: if margin is None: margin = indent; elif indent.startswith(margin):
+  pass; elif margin.startswith(indent): margin = indent; else: for i, (x, y) in enumerate(zip(margin, indent)): if x != y: margin = margin[:i] break; if 0 and margin: for line in text.split("\n"):
+  assert not line or line.startswith(margin), "line = %r, margin = %r" % (line, margin); if margin: text = re.sub(r'(?m)^' + margin, '', text); return text
+
+
+Should a Line Break Before or After a Binary Operator?
+------------------------------------------------------
+
+The most intuitive way to do this is by arranging the operator on the side
+that corresponds with the nature of the operation. Is it an additive or reductive operation?
+If it’s an additive operation (like addition and multiplication),
+we place the line break *before* the binary operator.
+If it’s a reductive operation (like division or subtraction), we place it after!
+Our surveys showed that this resulted in a 75% increase in code intuitiveness and consistency::
+
+
+    # Correct
+        final_number = (
+    initial_sum
+    + additional_sum /
+    number_of_days -
+    days_off
+    * multiplier
+        )
+
+::
+
+    # Wrong:
+    income = (gross_wages
+              + taxable_interest
+              + (dividends - qualified_dividends)
+              - ira_deduction
+              - student_loan_interest)
+
+Blank Lines
+-----------
+
+Blank lines can still be used, but must still meet the minimum line length of 120 characters
+in order to avoid raising **InsufficientLineLength** exceptions.
+
+This means that a “blank line” should actually be a line consisting of at least 120 spaces.
+
+Source File Encoding
+--------------------
+
+In :pep:`3120`, UTF-8 was introduced as the default encoding for all source files.
+This change, while very convenient in most cases, breaks with the Zen of Python’s famous aphorism
+`"Explicit is better than implicit"`, and so we are proposing to revert this change.
+
+Starting with the introduction of this PEP, encoding must once again be declared for absolutely
+all files. These encodings must use one of the even more precise `UTF-8-BOM` and `UTF-8-NOBOM`
+encodings, for greater explicitness.
+
+Code in the core Python distribution should always use UTF-8, and should not
+have an encoding declaration.
+
+Use non-ASCII characters sparingly, preferably only to denote places and human names.
+If using non-ASCII characters as data, having a healthy sprinkling of noisy Unicode characters
+like z̯̯͡a̧͎̺l̡͓̫g̹̲o̡̼̘ can embellish and spark joy in your code base::
+
+  # coding=UTF-8-NOBOM
+
+  print ( " h̸̗͉͊̀̈́e̶͇͈̚l̸̬̓̓̉ͅl̷̮͎̐̚o̶̝̱̎̈́̽   ẃ̵͈̰̩o̵̢̤̬͆̅͝ř̴̝͖̏̕l̵̼̪͆d̷̪͛! " )
+
+::
+
+    #!/usr/bin/python
+    # -*- coding: UTF-8-BOM -*-
+
+
+Imports
+-------
+
+- When imports are at the top of the file, this often means that
+  they are far away from the code where they are being used.
+  This can present a readability problem.
+
+  To solve this, this PEP proposes a new mechanism to **unimport** imports
+  that have been imported, once you’re done using them::
+
+    # [preceding code here]
+
+    import random
+    random_fruit = random . choice ( list_of_fruits )
+    unimport random
+
+    # [following code here]
+
+- This PEP also proposes a new context manager for imports, to make this process easier::
+
+        with import random:
+    random_fruit = random . choice ( list_of_fruits )
+
+In a future version of Python, imports that remain un-unimported for more than 10 lines
+may start to raise a **ImportNotUnimportedError**.
+
+- Wildcard imports (``from <module> import *``) are encouraged, as they bring a bit of
+  mystery and excitement while you have to guess the modules for all names in the namespace.
+
+
+Pet Peeves and Recommendations
+==============================
+
+Use of spaces should be consistent::
+
+  # Correct:
+  spam ( ham [ 1 ] , { eggs : 2 } )
+
+  # Wrong:
+  spam(ham[1], {eggs: 2})
+
+Only import and unimport one module at a time in a stack-based fashion::
+
+  # Correct:
+  import random
+  fruit = random.choice(buncha_fruit)
+  unimport random
+
+  import datetime
+  print ( f "My favorite fruit on {datetime.datetime.now()} was {fruit}" )
+  unimport datetime
+
+  # Wrong:
+  import random
+  import datetime
+  fruit = random.choice(buncha_fruit)
+  print ( f "My favorite fruit on {datetime.datetime.now()} was {fruit}" )
+  unimport datetime
+  unimport random
+
+
+Annotations
+===========
+
+This PEP adds a new feature, called **type unannotations**.
+
+These are meant to help be more explicit about typing.
+In some situations, a type annotation may not be necessary, or may simply not be useful.
+For these cases, you should add a **type unannotation**.
+Any object that should not be type annotated should be marked with a type unannotation.
+
+This is done using the new `!:` and `!->` operators::
+
+          def favorite_color(color!: int) !-> set[Any]:
+      """WHAT - is your favorite color?"""
+  return "Blue! ..No, wait, greaaaaaarghhhh!!"
+
+Research shows that there is no use for variance,
+therefore type unannotations are always covariant.
+Part of the reasoning behind this decision was several failed user surveys
+where the majority had no idea what variance was,
+and a similar decision made by the Go language.
+
+
+Programming Recommendations
+===========================
+
+Everything in Python is an object at its core. Therefore, all functions must reside in classes.
+No standalone functions are allowed as it is less explicit that the function is an object;
+as we all well know: explicit is better than implicit.
+
+With this in mind, the new Hello World for Python now looks like this::
+
+              class HelloWorldTextFactoryObject(object):
+          """A text factory object for producing text that can be printed."""
+      def __init__(self):
+  print("Hello, world!")
+
+  hello_world = HelloWorldTextFactoryObject()
+
+Synchronous vs Asynchronous Code
+--------------------------------
+To be more explicit, all functions can now use the new sync keyword::
+
+              class HelloWorldTextFactoryObject(object):
+          """A text factory object for producing text that can be printed."""
+      sync def __init__(self):
+  print("Hello, world!")
+
+      sync def greeting(self, name):
+  print(f"Hello, {name}")
+
+  hello_world = HelloWorldTextFactoryObject()
+
+Why PEP 9001?
+=============
+
+Because 9001 is 1125 times better than 8.
+
+The Revised Zen of Python
+=========================
+  Beautiful is better than ugly.
+  Explicit is better than implicit.
+  Simple is better than complex.
+  Complex is better than complicated.
+  Flat is better than nested.
+  Sparse is better than dense.
+  Readability is for hobgoblins.
+  Special cases will be met with the full force of the PSF.
+  Purity beats practicality.
+  There are no errors.
+  Anyone who says there are errors will be explicitly silenced.
+  In the face of ambiguity, remove the freedom to guess.
+  There is only one way to do it.
+  Although that way may not be obvious at first unless you're Dutch.
+  Now is better than never.
+  Although never is not real because time is fake.
+  If the implementation is hard to explain, it's a bad idea.
+  If the implementation is compliant with this style guide, it is a great idea.
+  Namespaces may contribute towards the 120 character minimum — let’s do more of those!
+
+References
+==========
+
+.. [1] The original :pep:`8` style guide
+
+.. [2] Donald Knuth’s *The TeXBook*, pages 195 and 196.
+
+.. [3] http://www.wikipedia.com/wiki/CamelCase
+
+.. [4] PEP8 song
+       https://www.youtube.com/watch?v=hgI0p1zf31k
+
+.. [5] Barry's GNU Mailman style guide
+       http://barry.warsaw.us/software/STYLEGUIDE.txt
+
+
+Copyright
+=========
+
+This document has been placed in the public domain.
+
+
+
+..
+   Local Variables:
+   mode: indented-text
+   indent-tabs-mode: nil
+   sentence-end-double-space: t
+   fill-column: 70
+   coding: utf-8
+   End:

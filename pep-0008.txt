@@ -5,11 +5,12 @@ Last-Modified: $Date$
 Author: Guido van Rossum <guido@python.org>,
         Barry Warsaw <barry@python.org>,
         Nick Coghlan <ncoghlan@gmail.com>
-Status: Active
+Status: Superseded
 Type: Process
 Content-Type: text/x-rst
 Created: 05-Jul-2001
 Post-History: 05-Jul-2001, 01-Aug-2013
+Superseded-By: 9001
 
 
 Introduction
@@ -708,7 +709,7 @@ complete sentences, with each sentence ending in a period.
 You should use two spaces after a sentence-ending period in multi-
 sentence comments, except after the final sentence.
 
-Ensure that your comments are clear and easily understandable to other 
+Ensure that your comments are clear and easily understandable to other
 speakers of the language you are writing in.
 
 Python coders from non-English speaking countries: please write your
