@@ -121,6 +121,7 @@ pre {
     overflow-x: auto;
     padding: .5rem .75rem;
     white-space: pre;
+    max-width: 790px;
 }
 
 /* Contents rules */
